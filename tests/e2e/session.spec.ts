@@ -94,6 +94,21 @@ test("number keys rate a flashcard after clicking Show answer", async ({ page },
   await expect(page.getByTestId("progress")).toHaveAttribute("aria-valuenow", String(before + 1));
 });
 
+test("signing out returns to sign in and clears offline copies", async ({ page }, info) => {
+  await login(page, fresh("signout", info.project.name));
+  await expect(page.getByTestId("prompt")).toBeVisible();
+  // Stand in for what the service worker caches in production.
+  await page.evaluate(async () => {
+    const c = await caches.open("pages-v1");
+    await c.put("/api/session", new Response("{}"));
+  });
+  await page.getByRole("button", { name: "Sign out" }).first().click();
+  await page.waitForURL("**/signin**");
+  expect(await page.evaluate(() => caches.keys())).not.toContain("pages-v1");
+  await page.goto("/today");
+  await expect(page).toHaveURL(/signin/);
+});
+
 test("navigation adapts to screen size", async ({ page }, info) => {
   await login(page, fresh("nav", info.project.name));
   const tabs = page.getByRole("navigation", { name: "Primary" });

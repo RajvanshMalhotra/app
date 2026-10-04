@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarChart3, BookOpen, CalendarCheck, Trophy } from "lucide-react";
+import { SignOutButton } from "./sign-out-button";
 import { ThemeToggle } from "./theme-toggle";
 
 const NAV = [
@@ -28,13 +29,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <n.icon className="size-4" />{n.label}
           </Link>
         ))}
-        <div className="mt-auto"><ThemeToggle /></div>
+        <div className="mt-auto flex items-center justify-between"><SignOutButton withLabel /><ThemeToggle /></div>
       </aside>
 
       <div className="min-w-0">
         <header className="flex h-14 items-center justify-between px-4 md:px-8 lg:hidden">
           <Wordmark />
-          <ThemeToggle />
+          <div className="flex items-center"><ThemeToggle /><SignOutButton /></div>
         </header>
         <main className="mx-auto w-full max-w-3xl px-4 pb-[calc(5rem+env(safe-area-inset-bottom))] pt-2 md:px-8 lg:pb-12 lg:pt-10">
           {children}

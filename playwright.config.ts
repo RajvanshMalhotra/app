@@ -7,7 +7,7 @@ const engine = process.env.PW_WEBKIT
 export default defineConfig({
   testDir: "tests/e2e",
   timeout: 60_000,
-  webServer: { command: "npm run dev", url: "http://localhost:3000/signin", reuseExistingServer: true, timeout: 120_000 },
+  webServer: { command: "npm run dev", url: "http://localhost:3000/signin", reuseExistingServer: true, timeout: 120_000, env: { ENABLE_DEV_LOGIN: "1" } },
   use: { baseURL: "http://localhost:3000" },
   // Device viewports, touch and user agents, run in the installed Google Chrome.
   // Set PW_WEBKIT=1 (after `npx playwright install webkit`) to run phone/tablet in real WebKit.
