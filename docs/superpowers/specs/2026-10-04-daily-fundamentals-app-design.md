@@ -20,6 +20,21 @@ A public web app (installable PWA, app stores later) that keeps people sharp on 
 
 **Deferred to v2:** trending-interview-topic scraping (LeetCode Discuss etc.; must respect site terms of service), Capacitor wrappers for the App Store and Play Store, social features beyond the leaderboard.
 
+## 2a. Devices and responsiveness
+
+The product is a single responsive website, installable as a PWA, and must work well on:
+- **Phones** (iOS Safari 16.4+, Android Chrome; 360–430px wide): bottom tab bar, one-handed answering, cards fill the screen, swipe to flip or rate.
+- **Tablets/iPads** (768–1180px, portrait and landscape): two-pane layout (card + context/tutor side panel), Apple Pencil/stylus input for math scratch is out of scope for v1.
+- **Laptops/desktops** (≥1024px): sidebar navigation, keyboard shortcuts (Space to flip, 1–4 to rate, Enter to submit).
+
+Requirements:
+- Mobile-first Tailwind breakpoints: base (phone), `md` 768px (tablet), `lg` 1024px (laptop).
+- Installable: web app manifest, icons (including apple-touch-icon), and a service worker that caches the app shell and today's session so it opens offline. Answers made offline are queued and synced.
+- Respect iOS safe areas (`env(safe-area-inset-*)`) and `100dvh`; tap targets ≥44px.
+- Light and dark themes follow the system setting, with a manual toggle.
+- Math is rendered with KaTeX on all devices.
+- Playwright end-to-end tests run on iPhone, iPad and desktop viewports.
+
 ## 3. Architecture
 
 ```
