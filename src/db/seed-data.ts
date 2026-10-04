@@ -1,0 +1,75 @@
+type SeedCard =
+  | { type: "flashcard" | "free_text" | "math"; prompt: string; answer: string; difficulty: number }
+  | { type: "mcq"; prompt: string; answer: string; choices: readonly string[]; difficulty: number };
+
+export const SEED: readonly { topic: string; track: string; cards: readonly SeedCard[] }[] = [
+  {
+    topic: "Calculus", track: "ml-engineer", cards: [
+      { type: "math", prompt: "Differentiate $f(x) = x^3 + 2x$.", answer: "3*x^2 + 2", difficulty: 1 },
+      { type: "math", prompt: "Compute $\\int_0^1 2x\\,dx$.", answer: "1", difficulty: 1 },
+      { type: "math", prompt: "Differentiate $f(x) = e^{2x}$.", answer: "2*exp(2*x)", difficulty: 1 },
+      { type: "math", prompt: "Differentiate $f(x) = \\ln(x^2)$ for $x > 0$.", answer: "2/x", difficulty: 2 },
+      { type: "mcq", prompt: "The derivative of the sigmoid $\\sigma(x)$ is…",
+        choices: ["$\\sigma(x)(1-\\sigma(x))$", "$\\sigma(x)^2$", "$1-\\sigma(x)$", "$e^{-x}$"],
+        answer: "$\\sigma(x)(1-\\sigma(x))$", difficulty: 2 },
+      { type: "flashcard", prompt: "State the chain rule.", answer: "$(f\\circ g)'(x) = f'(g(x))\\,g'(x)$", difficulty: 1 },
+      { type: "flashcard", prompt: "What does the gradient $\\nabla f$ point towards?",
+        answer: "The direction of steepest increase of $f$; its length is the rate of increase in that direction.", difficulty: 1 },
+      { type: "mcq", prompt: "At a local minimum of a twice-differentiable $f(x)$, which must hold?",
+        choices: ["$f'(x) = 0$ and $f''(x) \\ge 0$", "$f'(x) > 0$", "$f''(x) < 0$", "$f(x) = 0$"],
+        answer: "$f'(x) = 0$ and $f''(x) \\ge 0$", difficulty: 2 },
+    ],
+  },
+  {
+    topic: "Probability", track: "ml-engineer", cards: [
+      { type: "math", prompt: "A fair die is rolled twice. What is $P(\\text{sum} = 7)$?", answer: "1/6", difficulty: 1 },
+      { type: "math", prompt: "Two fair coins are flipped. What is $P(\\text{at least one head})$?", answer: "3/4", difficulty: 1 },
+      { type: "math", prompt: "$X \\sim \\text{Bernoulli}(0.3)$. What is $\\mathrm{Var}(X)$?", answer: "0.21", difficulty: 1 },
+      { type: "math", prompt: "$E[X] = 2$ and $E[X^2] = 7$. What is $\\mathrm{Var}(X)$?", answer: "3", difficulty: 1 },
+      { type: "flashcard", prompt: "State Bayes' theorem.", answer: "$P(A\\mid B) = \\dfrac{P(B\\mid A)\\,P(A)}{P(B)}$", difficulty: 1 },
+      { type: "mcq", prompt: "What is the variance of $\\text{Bernoulli}(p)$?",
+        choices: ["$p$", "$p(1-p)$", "$p^2$", "$1-p$"], answer: "$p(1-p)$", difficulty: 1 },
+      { type: "mcq", prompt: "If $A$ and $B$ are independent, $P(A \\cap B)$ equals…",
+        choices: ["$P(A)\\,P(B)$", "$P(A) + P(B)$", "$P(A \\mid B)$", "$0$"], answer: "$P(A)\\,P(B)$", difficulty: 1 },
+      { type: "flashcard", prompt: "What does the central limit theorem say?",
+        answer: "The mean of many i.i.d. samples with finite variance is approximately normally distributed, whatever the original distribution.", difficulty: 2 },
+    ],
+  },
+  {
+    topic: "Linear Algebra", track: "ml-engineer", cards: [
+      { type: "math", prompt: "What is the determinant of $\\begin{pmatrix} 2 & 1 \\\\ 4 & 3 \\end{pmatrix}$?", answer: "2", difficulty: 1 },
+      { type: "math", prompt: "Compute the dot product $(1, 2, 3) \\cdot (4, 5, 6)$.", answer: "32", difficulty: 1 },
+      { type: "math", prompt: "What is the Euclidean norm of $(3, 4)$?", answer: "5", difficulty: 1 },
+      { type: "math", prompt: "A $3 \\times 3$ matrix has eigenvalues $1, 2, 3$. What is its determinant?", answer: "6", difficulty: 2 },
+      { type: "mcq", prompt: "For an $m \\times n$ matrix $A$ and $n \\times p$ matrix $B$, what is the shape of $AB$?",
+        choices: ["$m \\times p$", "$n \\times n$", "$p \\times m$", "$m \\times n$"], answer: "$m \\times p$", difficulty: 1 },
+      { type: "mcq", prompt: "Which matrices are guaranteed to have real eigenvalues?",
+        choices: ["Symmetric matrices", "Any square matrix", "Upper-triangular matrices only", "Orthogonal matrices"],
+        answer: "Symmetric matrices", difficulty: 2 },
+      { type: "flashcard", prompt: "What is the rank of a matrix?",
+        answer: "The number of linearly independent columns (equivalently rows): the dimension of its column space.", difficulty: 1 },
+      { type: "flashcard", prompt: "What does the SVD $A = U \\Sigma V^\\top$ give you?",
+        answer: "Orthonormal bases $U$ and $V$ for the output and input spaces, with the singular values on the diagonal of $\\Sigma$ scaling each direction.", difficulty: 2 },
+    ],
+  },
+  {
+    topic: "ML Fundamentals", track: "ml-engineer", cards: [
+      { type: "mcq", prompt: "Which optimizer keeps running averages of both the gradient and its square?",
+        choices: ["SGD", "Adam", "Momentum", "Newton's method"], answer: "Adam", difficulty: 1 },
+      { type: "mcq", prompt: "L1 regularization tends to produce…",
+        choices: ["Sparse weights", "Larger weights", "Smoother decision boundaries only", "Faster convergence"],
+        answer: "Sparse weights", difficulty: 1 },
+      { type: "mcq", prompt: "High training accuracy but low validation accuracy usually means…",
+        choices: ["Overfitting", "Underfitting", "A learning rate that is too low", "Too few training epochs"],
+        answer: "Overfitting", difficulty: 1 },
+      { type: "math", prompt: "Precision is $0.5$ and recall is $1$. What is the F1 score?", answer: "2/3", difficulty: 2 },
+      { type: "math", prompt: "What is the cross-entropy loss $-\\ln p$ when the model gives the true class $p = 1$?", answer: "0", difficulty: 1 },
+      { type: "flashcard", prompt: "Explain the bias–variance trade-off.",
+        answer: "Simple models miss real patterns (high bias); flexible models fit noise (high variance). Total error is minimised in between.", difficulty: 1 },
+      { type: "flashcard", prompt: "Why do we use a validation set separate from the test set?",
+        answer: "Tuning choices on the test set leaks information, so its score stops being an unbiased estimate of real-world performance.", difficulty: 1 },
+      { type: "flashcard", prompt: "What problem does batch normalization address, and how?",
+        answer: "It stabilises training by normalising each layer's inputs per mini-batch, then learning a scale and shift, which allows higher learning rates.", difficulty: 2 },
+    ],
+  },
+];

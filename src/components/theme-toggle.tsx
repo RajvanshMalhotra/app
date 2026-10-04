@@ -1,0 +1,53 @@
+"use client";
+import { Monitor, Moon, Sun } from "lucide-react";
+import { useEffect, useSyncExternalStore } from "react";
+
+type Pref = "system" | "light" | "dark";
+const NEXT: Record<Pref, Pref> = { system: "light", light: "dark", dark: "system" };
+const LABEL: Record<Pref, string> = { system: "Theme: system", light: "Theme: light", dark: "Theme: dark" };
+const EVENT = "themepref";
+
+function readPref(): Pref {
+  try {
+    const saved = localStorage.getItem("theme");
+    if (saved === "light" || saved === "dark") return saved;
+  } catch {}
+  return "system";
+}
+
+function subscribe(onChange: () => void) {
+  window.addEventListener(EVENT, onChange);
+  window.addEventListener("storage", onChange);
+  return () => { window.removeEventListener(EVENT, onChange); window.removeEventListener("storage", onChange); };
+}
+
+function apply(pref: Pref) {
+  const dark = pref === "dark" || (pref === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+  document.documentElement.dataset.theme = dark ? "dark" : "light";
+}
+
+export function ThemeToggle() {
+  const pref = useSyncExternalStore(subscribe, readPref, () => "system" as Pref);
+
+  useEffect(() => {
+    if (pref !== "system") return;
+    const mq = matchMedia("(prefers-color-scheme: dark)");
+    const onChange = () => apply("system");
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, [pref]);
+
+  function cycle() {
+    const next = NEXT[pref];
+    try { if (next === "system") localStorage.removeItem("theme"); else localStorage.setItem("theme", next); } catch {}
+    apply(next);
+    window.dispatchEvent(new Event(EVENT));
+  }
+  const Icon = pref === "dark" ? Moon : pref === "light" ? Sun : Monitor;
+  return (
+    <button type="button" onClick={cycle} aria-label={LABEL[pref]} title={LABEL[pref]}
+      className="inline-flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring">
+      <Icon className="size-5" />
+    </button>
+  );
+}
