@@ -7,8 +7,9 @@ import Credentials from "next-auth/providers/credentials";
 import { eq } from "drizzle-orm";
 import { db } from "@/db/client";
 import { accounts, sessions, users, verificationTokens } from "@/db/schema";
+import { devLoginAllowed } from "@/lib/flags";
 
-export const devLoginEnabled = process.env.NODE_ENV !== "production";
+export const devLoginEnabled = devLoginAllowed(process.env);
 export const googleEnabled = Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
 export const emailEnabled = Boolean(process.env.EMAIL_SERVER && !process.env.EMAIL_SERVER.includes("example.com"));
 
