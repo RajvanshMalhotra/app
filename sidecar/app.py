@@ -1,4 +1,8 @@
+import math
+import multiprocessing as mp
+import os
 import re
+import threading
 
 import sympy
 from fastapi import FastAPI
@@ -16,6 +20,17 @@ TRANSFORMS = standard_transformations + (implicit_multiplication_application, co
 SAFE = re.compile(r"^[0-9a-zA-Z\s\.\+\-\*/\^\(\),=]*$")
 MAX_LEN = 500
 MAX_EXPONENT = 100
+MAX_DIGITS = 1000
+CHECK_TIMEOUT_S = 3.0
+CHECK_MEMORY_BYTES = 512 * 1024 * 1024
+# Each check runs in a forked child that is killed at the deadline, because SymPy can
+# take unbounded time on some inputs. Cap how many run at once so a burst of slow
+# answers can't fork-bomb the host.
+_slots = threading.BoundedSemaphore(max(2, os.cpu_count() or 2))
+# A forkserver forks from a clean single-threaded process with SymPy preloaded, which
+# avoids forking this multi-threaded server directly.
+_ctx = mp.get_context("forkserver")
+_ctx.set_forkserver_preload(["sympy", "app"])
 
 # parse_expr evaluates generated code. Give it only these names and no Python builtins,
 # so input like `input()` or `open(0)` can never reach a real function.
@@ -36,11 +51,24 @@ class CheckIn(BaseModel):
 
 
 def _bounded(expr) -> bool:
-    """Reject numeric powers whose exponent is too large to evaluate cheaply (e.g. 10^10^10)."""
+    """Reject numbers too large to evaluate cheaply (e.g. 10^10^10 or (((9^99)^99)^99)^99).
+
+    Walks bottom-up, so every inner power is already known to be small when an outer
+    one is measured: each exponent must be at most MAX_EXPONENT, and each numeric
+    power must stay below 10^MAX_DIGITS.
+    """
     for node in sympy.postorder_traversal(expr):
         if isinstance(node, Pow) and not node.exp.free_symbols:
-            # Inner powers were already checked, so evaluating this exponent is cheap.
-            if abs(complex(N(node.exp))) > MAX_EXPONENT:
+            e = abs(complex(N(node.exp)))
+            if e > MAX_EXPONENT:
+                return False
+            if not node.base.free_symbols:
+                b = abs(complex(N(node.base)))
+                if b > 1 and e * math.log10(b) > MAX_DIGITS:
+                    return False
+        elif isinstance(node, sympy.Function) and not node.free_symbols:
+            # exp(exp(exp(100))) and friends: keep numeric function arguments modest.
+            if any(abs(complex(N(a))) > MAX_DIGITS for a in node.args):
                 return False
     return True
 
@@ -60,10 +88,9 @@ def health():
     return {"ok": True}
 
 
-@app.post("/check")
-def check(body: CheckIn):
+def _compare(expected: str, given: str) -> dict:
     try:
-        e, g = parse(body.expected), parse(body.given)
+        e, g = parse(expected), parse(given)
     except Exception:
         return {"correct": False, "reason": "parse_error"}
     try:
@@ -76,3 +103,41 @@ def check(body: CheckIn):
     except Exception:
         return {"correct": False, "reason": "parse_error"}
     return {"correct": False, "reason": "different"}
+
+
+def _child(conn, expected: str, given: str) -> None:
+    try:
+        import resource
+        resource.setrlimit(resource.RLIMIT_AS, (CHECK_MEMORY_BYTES, CHECK_MEMORY_BYTES))
+    except Exception:
+        pass  # RLIMIT_AS is not supported on macOS; the time limit still applies.
+    try:
+        conn.send(_compare(expected, given))
+    except BaseException:
+        conn.send({"correct": False, "reason": "parse_error"})
+    finally:
+        conn.close()
+
+
+def _compare_with_deadline(expected: str, given: str) -> dict:
+    with _slots:
+        parent, child = _ctx.Pipe(duplex=False)
+        proc = _ctx.Process(target=_child, args=(child, expected, given), daemon=True)
+        proc.start()
+        child.close()
+        try:
+            if parent.poll(CHECK_TIMEOUT_S):
+                return parent.recv()
+            return {"correct": False, "reason": "timeout"}
+        except EOFError:  # child died, e.g. hit the memory limit
+            return {"correct": False, "reason": "timeout"}
+        finally:
+            if proc.is_alive():
+                proc.kill()
+            proc.join()
+            parent.close()
+
+
+@app.post("/check")
+def check(body: CheckIn):
+    return _compare_with_deadline(body.expected, body.given)

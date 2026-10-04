@@ -20,6 +20,7 @@ export async function grade(card: Card, res: Response, deps = { checkMath: realC
   if (card.type === "math" && res.kind === "text") {
     try {
       const r = await deps.checkMath(card.answer, res.text);
+      if (r.reason === "timeout") return { status: "self_rate", reason: SELF };
       if (r.reason === "parse_error") return { status: "graded", correct: false, rating: 1, feedback: "We couldn't read that expression." };
       return { status: "graded", correct: r.correct, rating: r.correct ? 3 : 1 };
     } catch {

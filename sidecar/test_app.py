@@ -42,7 +42,7 @@ def _post_with_deadline(given, seconds=3.0):
     return out["r"]
 
 
-@pytest.mark.parametrize("g", ["10^10^10", "2^(2^1000)", "(x+1)^100000"])
+@pytest.mark.parametrize("g", ["10^10^10", "2^(2^1000)", "(x+1)^100000", "(((9^99)^99)^99)^99", "exp(exp(exp(100)))"])
 def test_huge_powers_are_rejected_quickly(g):
     r = _post_with_deadline(g)
     assert r.status_code == 200
@@ -55,12 +55,25 @@ def test_python_builtins_are_not_callable(g, monkeypatch):
     called = []
     for name in ("input", "open", "print"):  # not eval/exec: sympy itself uses them
         monkeypatch.setattr(builtins, name, lambda *a, _n=name, **k: called.append(_n))
-    r = c.post("/check", json={"expected": "2*x", "given": g})
-    assert r.status_code == 200
-    assert r.json()["correct"] is False
+    # Checks run in a child process; call the comparison in-process so the patched builtins are visible.
+    from app import _compare
+    assert _compare("2*x", g)["correct"] is False
     assert called == []
 
 
 @pytest.mark.parametrize("e,g", [("2*exp(2*x)", "2e^(2x)"), ("exp(1)", "e"), ("log(x)", "ln(x)")])
 def test_common_notation(e, g):
     assert check(e, g)["correct"] is True
+
+
+@pytest.mark.parametrize("g", ["(x+y+z+1)^100 - (x+y+z+1)^99", "(x+1)^100*(y+1)^100*(z+1)^100"])
+def test_slow_symbolic_input_times_out(g):
+    r = _post_with_deadline(g, seconds=6.0)
+    assert r.json() == {"correct": False, "reason": "timeout"}
+
+
+def test_correct_answers_still_fast_after_timeout_machinery():
+    import time
+    t = time.time()
+    assert check("3*x^2 + 2", "2 + 3x^2")["correct"] is True
+    assert time.time() - t < 2.0

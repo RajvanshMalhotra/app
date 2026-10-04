@@ -35,3 +35,9 @@ test("math parse error is incorrect with feedback", async () => {
   const r = await grade(card({ type: "math" }), { kind: "text", text: "2x+" }, { checkMath });
   expect(r).toMatchObject({ status: "graded", correct: false, feedback: "We couldn't read that expression." });
 });
+
+test("math checker timeout falls back to self rating", async () => {
+  const checkMath = vi.fn().mockResolvedValue({ correct: false, reason: "timeout" });
+  const r = await grade(card({ type: "math" }), { kind: "text", text: "(x+1)^100" }, { checkMath });
+  expect(r.status).toBe("self_rate");
+});
