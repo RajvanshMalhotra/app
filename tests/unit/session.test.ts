@@ -41,7 +41,7 @@ test("due reviews come first, not-yet-due cards are excluded", async () => {
 
 test("caps at size", async () => {
   const { u } = await setup(40);
-  expect(await buildDailySession(u.id, now, 20)).toHaveLength(20);
+  expect(await buildDailySession(u.id, now, { size: 20 })).toHaveLength(20);
 });
 
 test("uses only the latest review of each card", async () => {
@@ -69,4 +69,29 @@ test("adds not-yet-due cards answered wrong as weak-spot drills", async () => {
   ]);
   const s = await buildDailySession(u.id, now);
   expect(s).toEqual([expect.objectContaining({ kind: "drill", card: expect.objectContaining({ id: cs[0].id }) })]);
+});
+
+test("answers given today count against the daily size", async () => {
+  const { u, cs } = await setup(40);
+  const dayStart = new Date("2026-10-04T00:00:00Z");
+  const earlierToday = new Date("2026-10-04T08:00:00Z");
+  // Five cards answered this morning; they're already due again (short learning steps).
+  await db.insert(reviews).values(cs.slice(0, 5).map((c) => rev(u.id, c.id, earlierToday, true, earlierToday)));
+  expect(await buildDailySession(u.id, now, { size: 20, dayStart })).toHaveLength(15);
+});
+
+test("the session is empty once today's quota is used", async () => {
+  const { u, cs } = await setup(30);
+  const dayStart = new Date("2026-10-04T00:00:00Z");
+  const earlierToday = new Date("2026-10-04T08:00:00Z");
+  await db.insert(reviews).values(cs.slice(0, 20).map((c) => rev(u.id, c.id, earlierToday, true, earlierToday)));
+  expect(await buildDailySession(u.id, now, { size: 20, dayStart })).toEqual([]);
+});
+
+test("yesterday's answers don't count against today", async () => {
+  const { u, cs } = await setup(30);
+  const dayStart = new Date("2026-10-04T00:00:00Z");
+  const yesterday = new Date("2026-10-03T08:00:00Z");
+  await db.insert(reviews).values(cs.slice(0, 20).map((c) => rev(u.id, c.id, new Date("2026-10-30T00:00:00Z"), true, yesterday)));
+  expect(await buildDailySession(u.id, now, { size: 20, dayStart })).toHaveLength(10);
 });

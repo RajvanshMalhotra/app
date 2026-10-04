@@ -13,7 +13,7 @@ export function SessionClient() {
 
   const load = useCallback(() => {
     setError(false);
-    fetch("/api/session")
+    fetch(`/api/session?tz=${encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone)}`)
       .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
       .then((d) => { setItems(d.items); setI(0); })
       .catch(() => setError(true));

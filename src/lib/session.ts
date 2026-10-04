@@ -1,16 +1,33 @@
-import { and, eq, isNull, lte, notInArray, or, sql } from "drizzle-orm";
+import { and, count, eq, gte, isNull, lte, notInArray, or, sql } from "drizzle-orm";
 import { db } from "@/db/client";
 import { cards, reviews, type Card } from "@/db/schema";
 
 export type SessionItem = { card: Card; kind: "review" | "new" | "drill" };
 
 const DRILLS = 4;
+export const DAILY_SIZE = 20;
+
+type Options = {
+  /** Cards per day, counting answers already given today. */
+  size?: number;
+  /** When the user's local day began; answers since then count against `size`. */
+  dayStart?: Date;
+};
 
 /**
  * Today's queue: due reviews first, then unseen cards, then a few recently-missed
  * cards as weak-spot drills. The latest review of each card holds its schedule.
+ * Answers already given since `dayStart` use up part of the day's `size`.
  */
-export async function buildDailySession(userId: string, now: Date, size = 20): Promise<SessionItem[]> {
+export async function buildDailySession(userId: string, now: Date, opts: Options = {}): Promise<SessionItem[]> {
+  let size = opts.size ?? DAILY_SIZE;
+  if (opts.dayStart) {
+    const [{ n }] = await db.select({ n: count() }).from(reviews)
+      .where(and(eq(reviews.userId, userId), gte(reviews.createdAt, opts.dayStart)));
+    size -= n;
+  }
+  if (size <= 0) return [];
+
   const latest = db.$with("latest").as(
     db.selectDistinctOn([reviews.cardId], { cardId: reviews.cardId, dueAt: reviews.dueAt, correct: reviews.correct })
       .from(reviews).where(eq(reviews.userId, userId))
