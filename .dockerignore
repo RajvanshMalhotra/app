@@ -1,0 +1,14 @@
+.git
+.next
+node_modules
+.data
+.env
+.env.*
+!.env.example
+.superpowers
+sidecar
+tests
+test-results
+playwright-report
+docs
+*.log
