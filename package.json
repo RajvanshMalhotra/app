@@ -10,7 +10,8 @@
     "test": "dotenv -e .env -- vitest run",
     "e2e": "playwright test",
     "db:push": "dotenv -e .env -- drizzle-kit push",
-    "db:seed": "dotenv -e .env -- tsx src/db/seed.ts"
+    "db:seed": "dotenv -e .env -- tsx src/db/seed.ts",
+    "db:dev": "tsx scripts/dev-db.mts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",
@@ -42,6 +43,7 @@
     "@types/react-dom": "^19",
     "dotenv-cli": "^11.0.0",
     "drizzle-kit": "^0.31.11",
+    "embedded-postgres": "^16.14.0-beta.17",
     "eslint": "^9",
     "eslint-config-next": "16.3.8",
     "tailwindcss": "^4",
