@@ -26,6 +26,7 @@ ALLOWED = [
 ]
 NAMESPACE = {name: getattr(sympy, name) for name in ALLOWED}
 NAMESPACE["ln"] = sympy.log
+NAMESPACE["e"] = sympy.E  # students write e^x for exp(x)
 NAMESPACE["__builtins__"] = {}
 
 

@@ -59,3 +59,8 @@ def test_python_builtins_are_not_callable(g, monkeypatch):
     assert r.status_code == 200
     assert r.json()["correct"] is False
     assert called == []
+
+
+@pytest.mark.parametrize("e,g", [("2*exp(2*x)", "2e^(2x)"), ("exp(1)", "e"), ("log(x)", "ln(x)")])
+def test_common_notation(e, g):
+    assert check(e, g)["correct"] is True
