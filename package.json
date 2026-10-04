@@ -11,7 +11,8 @@
     "e2e": "playwright test",
     "db:push": "dotenv -e .env -- drizzle-kit push",
     "db:seed": "dotenv -e .env -- tsx src/db/seed.ts",
-    "db:dev": "tsx scripts/dev-db.mts"
+    "db:dev": "tsx scripts/dev-db.mts",
+    "check:build": "tsx scripts/check-dynamic.mts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",

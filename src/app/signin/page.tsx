@@ -1,10 +1,13 @@
+import { connection } from "next/server";
 import { devLoginEnabled, emailEnabled, googleEnabled, signIn } from "@/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 export const metadata = { title: "Sign in · Fundamentals" };
 
-export default function SignIn() {
+export default async function SignIn() {
+  // Render per request: which sign-in methods exist depends on runtime configuration.
+  await connection();
   return (
     <main className="grid min-h-dvh place-items-center px-4 pb-[env(safe-area-inset-bottom)]">
       <div className="sheet w-full max-w-md overflow-hidden rounded-2xl border shadow-[0_12px_32px_-18px_rgb(27_34_48/0.35)]">
