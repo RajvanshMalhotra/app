@@ -29,7 +29,15 @@ function MarginMark({ correct }: { correct: boolean }) {
   );
 }
 
-export function StudyCard({ card, kind, onDone }: { card: SessionCard; kind: string; onDone: () => void }) {
+export function StudyCard({ card, kind, onDone: advance }: { card: SessionCard; kind: string; onDone: () => void }) {
+  // The card animates out after advancing, so guard against a second advance
+  // (e.g. a keyboard shortcut and a focused button both handling the same Enter).
+  const done = useRef(false);
+  const onDone = () => {
+    if (done.current) return;
+    done.current = true;
+    advance();
+  };
   const [flipped, setFlipped] = useState(false);
   const [text, setText] = useState("");
   const [busy, setBusy] = useState(false);
@@ -63,6 +71,8 @@ export function StudyCard({ card, kind, onDone }: { card: SessionCard; kind: str
     function onKey(e: KeyboardEvent) {
       const tag = (e.target as HTMLElement).tagName;
       if (tag === "INPUT" || tag === "TEXTAREA") return;
+      // A focused button already activates on Enter/Space; handling them here too would act twice.
+      if (tag === "BUTTON" && (e.key === "Enter" || e.code === "Space")) return;
       if (card.type === "flashcard" && !flipped && e.code === "Space") { e.preventDefault(); setFlipped(true); return; }
       const n = Number(e.key);
       if (n >= 1 && n <= 4 && ((card.type === "flashcard" && flipped) || result?.status === "self_rate"))

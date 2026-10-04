@@ -68,6 +68,32 @@ test("a math answer in equivalent form is marked correct", async ({ page }, info
   await expect(page.getByTestId("result")).toContainText("Correct");
 });
 
+test("pressing Enter on a graded answer moves on exactly one card", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop", "keyboard shortcut is a laptop feature");
+  await login(page, fresh("enter", info.project.name));
+  const choice = page.getByTestId("choice-0");
+  for (let i = 0; i < 20 && !(await choice.isVisible()); i++) await answerCurrent(page);
+  await choice.click();
+  await expect(page.getByTestId("result")).toBeVisible();
+  const before = Number(await page.getByTestId("progress").getAttribute("aria-valuenow"));
+  await page.keyboard.press("Enter");
+  await expect(page.getByTestId("progress")).toHaveAttribute("aria-valuenow", String(before + 1));
+  await page.waitForTimeout(800); // let the exit animation finish; a second advance would land here
+  await expect(page.getByTestId("progress")).toHaveAttribute("aria-valuenow", String(before + 1));
+});
+
+test("number keys rate a flashcard after clicking Show answer", async ({ page }, info) => {
+  test.skip(info.project.name !== "desktop", "keyboard shortcut is a laptop feature");
+  await login(page, fresh("keys", info.project.name));
+  const flip = page.getByTestId("flip");
+  for (let i = 0; i < 20 && !(await flip.isVisible()); i++) await answerCurrent(page);
+  const before = Number(await page.getByTestId("progress").getAttribute("aria-valuenow"));
+  await flip.click();
+  await expect(page.getByTestId("rate-3")).toBeVisible();
+  await page.keyboard.press("3");
+  await expect(page.getByTestId("progress")).toHaveAttribute("aria-valuenow", String(before + 1));
+});
+
 test("navigation adapts to screen size", async ({ page }, info) => {
   await login(page, fresh("nav", info.project.name));
   const tabs = page.getByRole("navigation", { name: "Primary" });
