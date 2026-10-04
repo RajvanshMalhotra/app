@@ -1,6 +1,6 @@
 // Verifies seed content: every math answer is accepted by the math checker,
 // and every multiple-choice answer is one of its choices.
-import { SEED } from "../src/db/seed-data.ts";
+import { SEED } from "../src/db/seed-data";
 
 let bad = 0;
 for (const t of SEED) for (const c of t.cards) {
