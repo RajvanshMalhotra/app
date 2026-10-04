@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { StudyCard, type SessionCard } from "@/components/study-card";
 import { Button } from "@/components/ui/button";
@@ -11,21 +11,22 @@ export function SessionClient() {
   const [i, setI] = useState(0);
   const [error, setError] = useState(false);
 
-  const load = useCallback(() => {
-    setError(false);
-    fetch(`/api/session?tz=${encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone)}`)
+  function fetchSession() {
+    const tz = encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone);
+    return fetch(`/api/session?tz=${tz}`)
       .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
       .then((d) => { setItems(d.items); setI(0); })
       .catch(() => setError(true));
-  }, []);
-  useEffect(load, [load]);
+  }
+  useEffect(() => { fetchSession(); }, []);
+  const retry = () => { setError(false); setItems(null); fetchSession(); };
 
   if (error) {
     return (
       <div role="alert" className="py-20">
         <p className="text-lg">Today&apos;s session didn&apos;t load.</p>
         <p className="mt-1 text-muted-foreground">Check your connection, then try again.</p>
-        <Button className="mt-6 h-11" onClick={load}>Try again</Button>
+        <Button className="mt-6 h-11" onClick={retry}>Try again</Button>
       </div>
     );
   }

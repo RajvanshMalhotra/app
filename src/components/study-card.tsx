@@ -43,18 +43,18 @@ export function StudyCard({ card, kind, onDone: advance }: { card: SessionCard; 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<Result | null>(null);
-  const started = useRef(Date.now());
-  const answerId = useRef(crypto.randomUUID());
+  const [started] = useState(() => Date.now());
+  const answerId = useRef("");
 
   async function send(response: object, fresh = false) {
     if (busy) return;
     setBusy(true);
     setError(null);
-    if (fresh) answerId.current = crypto.randomUUID();
+    if (fresh || !answerId.current) answerId.current = crypto.randomUUID();
     try {
       const r = await fetch("/api/answer", {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ cardId: card.id, clientAnswerId: answerId.current, response, responseMs: Date.now() - started.current }),
+        body: JSON.stringify({ cardId: card.id, clientAnswerId: answerId.current, response, responseMs: Date.now() - started }),
       });
       if (!r.ok) throw new Error(String(r.status));
       const data: Result = await r.json();
