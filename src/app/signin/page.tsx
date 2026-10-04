@@ -16,7 +16,7 @@ export default function SignIn() {
 
           {googleEnabled && (
             <form action={async () => { "use server"; await signIn("google", { redirectTo: "/today" }); }}>
-              <Button className="h-11 w-full">Continue with Google</Button>
+              <Button type="submit" className="h-11 w-full">Continue with Google</Button>
             </form>
           )}
 
@@ -26,7 +26,7 @@ export default function SignIn() {
               await signIn("nodemailer", { email: String(f.get("email")), redirectTo: "/today" });
             }}>
               <Input name="email" type="email" required autoComplete="email" placeholder="you@example.com" aria-label="Email" className="h-11 bg-card" />
-              <Button variant="outline" className="h-11 w-full bg-card">Email me a sign-in link</Button>
+              <Button type="submit" variant="outline" className="h-11 w-full bg-card">Email me a sign-in link</Button>
             </form>
           )}
 
@@ -37,7 +37,7 @@ export default function SignIn() {
             }}>
               <p className="text-sm text-muted-foreground">Development sign-in (disabled in production)</p>
               <Input name="email" aria-label="dev email" defaultValue="dev@local.test" className="h-11 bg-card" />
-              <Button variant="secondary" className="h-11 w-full">Dev login</Button>
+              <Button type="submit" variant="secondary" className="h-11 w-full">Dev login</Button>
             </form>
           )}
 
